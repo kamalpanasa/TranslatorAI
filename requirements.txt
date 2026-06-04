@@ -1,0 +1,27 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-multipart>=0.0.9
+
+# AI/ML & NLP
+torch>=2.2.0
+transformers>=4.38.0
+sentencepiece>=0.2.0
+sacremoses>=0.1.1
+huggingface-hub>=0.21.0
+
+# Document & Media Processing
+pymupdf>=1.23.26
+pandas>=2.2.1
+openpyxl>=3.1.2
+python-docx>=1.1.0
+pytesseract>=0.3.10
+Pillow>=10.2.0
+openai-whisper>=20231117
+
+# Database, Security & Configuration
+supabase>=2.3.0
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+python-dotenv>=1.0.1
