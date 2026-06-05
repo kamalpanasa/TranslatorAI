@@ -29,11 +29,11 @@ RUN mkdir -p /app/temp /app/exports
 # Copy application source code
 COPY . .
 
-# Expose API application port
-EXPOSE 8000
+# Expose API application port (Hugging Face Spaces requires port 7860)
+EXPOSE 7860
 
 # Set environment variables for OCR binary mapping inside linux container
 ENV TESSERACT_CMD="tesseract"
 
 # Launch application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
