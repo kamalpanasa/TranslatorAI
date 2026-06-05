@@ -1,24 +1,7 @@
 import os
 import json
-from typing import List, Union
-from pydantic import AnyHttpUrl, BeforeValidator
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing_extensions import Annotated
-
-
-def parse_cors_origins(v: Union[str, List[str]]) -> List[str]:
-    if isinstance(v, str):
-        if not v.strip():
-            return []
-        if v.startswith("[") and v.endswith("]"):
-            try:
-                return json.loads(v)
-            except Exception:
-                pass
-        return [i.strip() for i in v.split(",")]
-    elif isinstance(v, list):
-        return v
-    raise ValueError(v)
 
 
 class Settings(BaseSettings):
@@ -34,10 +17,8 @@ class Settings(BaseSettings):
     ENV: str = "development"
     API_V1_STR: str = "/api/v1"
     
-    # CORS Origins
-    BACKEND_CORS_ORIGINS: Annotated[
-        List[str], BeforeValidator(parse_cors_origins)
-    ] = ["*"]
+    # CORS Origins (stored as raw string to prevent pydantic-settings list-parsing exceptions)
+    BACKEND_CORS_ORIGINS: str = "*"
 
     # Security & Authentication
     JWT_SECRET: str = "dev-secret-key-change-me-in-production"
@@ -61,6 +42,26 @@ class Settings(BaseSettings):
     @property
     def max_file_size_bytes(self) -> int:
         return self.MAX_FILE_SIZE_MB * 1024 * 1024
+
+    @property
+    def cors_origins(self) -> List[str]:
+        """
+        Parses the raw BACKEND_CORS_ORIGINS string into a list of origins.
+        Supports:
+          - Wildcard "*"
+          - Comma-separated list "url1,url2"
+          - JSON array '["url1", "url2"]'
+          - Empty values (falls back to empty list)
+        """
+        v = self.BACKEND_CORS_ORIGINS.strip()
+        if not v:
+            return []
+        if v.startswith("[") and v.endswith("]"):
+            try:
+                return json.loads(v)
+            except Exception:
+                pass
+        return [i.strip() for i in v.split(",")]
 
 
 # Initialize configuration
