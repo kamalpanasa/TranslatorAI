@@ -1,6 +1,6 @@
-import os
 import json
 from typing import List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,35 +9,34 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
-        extra="ignore"
+        extra="ignore",
     )
 
-    # Application Settings
-    PROJECT_NAME: str = "Multilingual Translation API"
+    # Environment
     ENV: str = "development"
+
+    # API
     API_V1_STR: str = "/api/v1"
-    
-    # CORS Origins (stored as raw string to prevent pydantic-settings list-parsing exceptions)
+
+    # CORS Origins
+    # Supports:
+    # *
+    # http://localhost:3000,http://localhost:5173
+    # ["http://localhost:3000","http://localhost:5173"]
     BACKEND_CORS_ORIGINS: str = "*"
 
     # Security & Authentication
     JWT_SECRET: str = "dev-secret-key-change-me-in-production"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    # AI/ML Models
-    NLLB_MODEL_NAME: str = "facebook/nllb-200-3.3B"
-    WHISPER_MODEL_NAME: str = "base"
+    # Database
+    DATABASE_URL: str = (
+        "postgresql://postgres:postgres@localhost:5432/app_db"
+    )
 
-    # OCR Settings
-    TESSERACT_CMD: str = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
-
-    # Storage & Database (Supabase)
-    SUPABASE_URL: str = "https://your-project-ref.supabase.co"
-    SUPABASE_KEY: str = "your-anon-or-service-role-key"
-
-    # Limits & Uploads
-    MAX_FILE_SIZE_MB: int = 50
+    # File Uploads
+    MAX_FILE_SIZE_MB: int = 10
 
     @property
     def max_file_size_bytes(self) -> int:
@@ -46,22 +45,30 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> List[str]:
         """
-        Parses the raw BACKEND_CORS_ORIGINS string into a list of origins.
-        Supports:
-          - Wildcard "*"
-          - Comma-separated list "url1,url2"
-          - JSON array '["url1", "url2"]'
-          - Empty values (falls back to empty list)
+        Converts BACKEND_CORS_ORIGINS into a list.
+
+        Supported formats:
+        *
+        http://localhost:3000,http://localhost:5173
+        ["http://localhost:3000","http://localhost:5173"]
         """
-        v = self.BACKEND_CORS_ORIGINS.strip()
-        if not v:
+        value = self.BACKEND_CORS_ORIGINS.strip()
+
+        if not value:
             return []
-        if v.startswith("[") and v.endswith("]"):
+
+        if value == "*":
+            return ["*"]
+
+        if value.startswith("[") and value.endswith("]"):
             try:
-                return json.loads(v)
-            except Exception:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed]
+            except json.JSONDecodeError:
                 pass
-        return [i.strip() for i in v.split(",")]
+
+        return [origin.strip() for origin in value.split(",") if origin.strip()]
 
 
 # Initialize configuration
